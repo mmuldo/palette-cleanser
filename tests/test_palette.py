@@ -1,5 +1,5 @@
 from palettecleanser import palette
-from palettecleanser import theme
+from palettecleanser import config
 from PIL import Image
 import os
 import pytest
@@ -44,9 +44,9 @@ class TestColor:
             palette.Color(0, 50, 100)
         ]
 
-    def test_hex(self):
+    def test_str(self):
         color = palette.Color(255, 37, 104)
-        assert color.hex() == '#ff2568'
+        assert str(color) == '#ff2568'
 
     def test_str(self):
         color = palette.Color(255, 37, 104)
@@ -66,12 +66,9 @@ class TestPalette:
         p = palette.Palette([palette.Color(0, 10, 15), palette.Color(40, 10, 5)])
         assert p.tone(50, False) == palette.Palette([palette.Color(0, 5, 8), palette.Color(20, 5, 3)])
 
-    def test_table(self):
-        p = palette.Palette([palette.Color(0, 10, 15), palette.Color(40, 10, 5)], 'hi')
-        assert p.table() == {'hi': [palette.Color(0, 10, 15), palette.Color(40, 10, 5)]}
-
     def test_str(self):
         p = palette.Palette([palette.Color(0, 170, 91), palette.Color(40, 10, 255)], 'hi')
+        print()
         print(p)
 
     def test_from_hexes(self):
@@ -84,57 +81,29 @@ class TestPalette:
 
     def test_save_overwrite(self, monkeypatch):
         monkeypatch.setattr('builtins.input', lambda _: 'y')
+        monkeypatch.setattr(config, 'palettes_dir', os.path.join(os.path.dirname(__file__), 'test_data/fake_config/palettes'))
         p = palette.Palette([palette.Color(105, 10, 165), palette.Color(40, 140, 5)], 'test')
         p.save()
 
     def test_save_dont_overwrite(self, monkeypatch):
         monkeypatch.setattr('builtins.input', lambda _: 'n')
+        monkeypatch.setattr(config, 'palettes_dir', os.path.join(os.path.dirname(__file__), 'test_data/fake_config/palettes'))
         p = palette.Palette([palette.Color(110, 10, 165), palette.Color(40, 140, 5)], 'test')
         p.save()
 
-    def test_from_config_exists(self):
+    def test_from_config_exists(self, monkeypatch):
+        monkeypatch.setattr(config, 'palettes_dir', os.path.join(os.path.dirname(__file__), 'test_data/fake_config/palettes'))
         p = palette.Palette([palette.Color(105, 10, 165), palette.Color(40, 140, 5)], 'test')
         p0 = palette.from_config('test')
         assert p == p0
 
-    def test_from_config_doesnt_exist(self):
+    def test_from_config_doesnt_exist(self, monkeypatch):
+        monkeypatch.setattr(config, 'palettes_dir', os.path.join(os.path.dirname(__file__), 'test_data/fake_config/palettes'))
         with pytest.raises(palette.PaletteNotFoundError) as e:
             palette.from_config('garbage garbage garbage')
 
     def test_from_image(self):
         with Image.open(os.path.join(os.path.dirname(__file__), 'test_data/muruusa-mountain.jpg')) as img:
             p = palette.from_image(img)
+            print()
             print(p)
-
-
-class TestTheme:
-    def test_table(self, monkeypatch):
-        monkeypatch.setattr('builtins.input', lambda _: 'y')
-        p0 = palette.Palette([palette.Color(0, 10, 15), palette.Color(40, 10, 5)], 'hi')
-        p0.save()
-        p1 = palette.Palette([palette.Color(105, 10, 165), palette.Color(40, 140, 5)], 'test')
-        p1.save()
-
-        t = theme.Theme('hello', ['hi', 'test'], 'test_data/muruusa-mountain.jpg')
-        assert t.table() == {
-            'hi': [palette.Color(0, 10, 15), palette.Color(40, 10, 5)],
-            'test': [palette.Color(105, 10, 165), palette.Color(40, 140, 5)]
-        }
-
-    def test_from_image(self, monkeypatch):
-        monkeypatch.setattr('builtins.input', lambda _: 'y')
-        with Image.open(os.path.join(os.path.dirname(__file__), 'test_data/muruusa-mountain.jpg')) as img:
-            t = theme.from_image(img, 'muruusa')
-            print(t)
-
-    def test_from_config(self, monkeypatch):
-        monkeypatch.setattr('builtins.input', lambda _: 'y')
-        p0 = palette.Palette([palette.Color(0, 10, 15), palette.Color(40, 10, 5)], 'hi')
-        p0.save()
-        p1 = palette.Palette([palette.Color(105, 10, 165), palette.Color(40, 140, 5)], 'test')
-        p1.save()
-
-        t = theme.Theme('hello', ['hi', 'test'], 'test_data/muruusa-mountain.jpg', {'blah': 1})
-        t.save()
-        t0 = theme.from_config('hello')
-        assert t == t0
