@@ -49,6 +49,27 @@ class Theme:
         self.image_path = image_path
         self.settings = settings
 
+    def get_palettes(self) -> list[pal.Palette]:
+        '''gets the actual palette objects
+
+        Returns
+        -------
+        list[pal.Palette]
+            list of Palettes associated with names in palettes attribute
+        '''
+        return [pal.from_config(p) for p in self.palettes]
+
+    def export(self) -> dict[str, Any]:
+        '''converts theme to dictionary
+
+        Returns
+        -------
+        dict[str, Any]
+            dictionary representation of theme
+        '''
+        return vars(self)|{'palettes': self.get_palettes()}
+
+
     def save(self):
         '''saves Theme to yml file at $XDG_CONFIG_HOME/palette-cleanser/themes/
 
@@ -73,8 +94,8 @@ class Theme:
         dict[str, list[palette.Color]]
             set of columns where the headers are names of palattes and cells are colors
         '''
-        palettes = [pal.from_config(p) for p in self.palettes]
-        return {p.name: p.colors for p in palettes}
+        palette_tables = [p.table() for p in self.get_palettes()]
+        return reduce(lambda x, y: x|y, palette_tables)
 
     def __str__(self):
         return tabulate(self.table(), headers='keys')
@@ -114,7 +135,7 @@ def from_image(img: Image,
     '''
     main_palette = pal.from_image(img, name, base_palette, quantize_number)
     dark_palette = main_palette.tone(35, False, name + "-dark")
-    light_palette = main_palette.tone(35, True, name + "-light")
+    light_palette = main_palette.tone(20, True, name + "-light")
     for p in [main_palette, dark_palette, light_palette]:
         p.save()
 
