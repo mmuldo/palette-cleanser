@@ -1,0 +1,60 @@
+colors:
+  primary:
+    background: "{{ palettes[0].colors[0] }}"
+    foreground: "{{ palettes[0].colors[7] }}"
+  cursor:
+    text: CellBackground
+    cursor: CellForeground
+  vi_mode_cursor:
+    text: CellBackground
+    cursor: CellForeground
+  search:
+    matches:
+      foreground: "{{ palettes[0].colors[0] }}"
+      background: "{{ palettes[2].colors[1] }}"
+    focused_match:
+      foreground: "{{ palettes[2].colors[1] }}"
+      background: "{{ palettes[0].colors[0] }}"
+    bar:
+      foreground: "{{ palettes[1].colors[4] }}"
+      background: "{{ palettes[2].colors[6] }}"
+  hints:
+    start:
+      foreground: "{{ palettes[1].colors[4] }}"
+      background: "{{ palettes[2].colors[3] }}"
+    end:
+      foreground: "{{ palettes[2].colors[3] }}"
+      background: "{{ palettes[1].colors[4] }}"
+  line_indicator:
+    foreground: None
+    background: None
+  selection:
+    text: CellBackground
+    background: CellForeground
+  normal:
+    black:   "{{ palettes[0].colors[0] }}"
+    red:     "{{ palettes[0].colors[1] }}"
+    green:   "{{ palettes[0].colors[2] }}"
+    yellow:  "{{ palettes[0].colors[3] }}"
+    blue:    "{{ palettes[0].colors[4] }}"
+    magenta: "{{ palettes[0].colors[5] }}"
+    cyan:    "{{ palettes[0].colors[6] }}"
+    white:   "{{ palettes[0].colors[7] }}"
+  bright:
+    black:   "{{ palettes[2].colors[0] }}"
+    red:     "{{ palettes[2].colors[1] }}"
+    green:   "{{ palettes[2].colors[2] }}"
+    yellow:  "{{ palettes[2].colors[3] }}"
+    blue:    "{{ palettes[2].colors[4] }}"
+    magenta: "{{ palettes[2].colors[5] }}"
+    cyan:    "{{ palettes[2].colors[6] }}"
+    white:   "{{ palettes[2].colors[7] }}"
+  dim:
+    black:   "{{ palettes[1].colors[0] }}"
+    red:     "{{ palettes[1].colors[1] }}"
+    green:   "{{ palettes[1].colors[2] }}"
+    yellow:  "{{ palettes[1].colors[3] }}"
+    blue:    "{{ palettes[1].colors[4] }}"
+    magenta: "{{ palettes[1].colors[5] }}"
+    cyan:    "{{ palettes[1].colors[6] }}"
+    white:   "{{ palettes[1].colors[7] }}"
