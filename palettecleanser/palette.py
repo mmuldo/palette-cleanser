@@ -124,7 +124,7 @@ class Color:
 
         return [Color(r(t), g(t), b(t)) for t in np.linspace(0, 1, n)]
 
-    def hex(self) -> str:
+    def __str__(self) -> str:
         '''calculates hex code
 
         Returns
@@ -134,11 +134,11 @@ class Color:
         '''
         return '#' + '%0.2x' * 3 % (self.red, self.green, self.blue)
 
-    def __str__(self):
+    def show(self):
         '''hex code where the background color is that represented by the current object'''
         start = ';'.join(['\x1b[48', '2', str(self.red), str(self.green), str(self.blue) + 'm'])
         end = '\x1b[0m'
-        return start + self.hex() + end
+        return start + str(self) + end
 
 @dataclass
 class Palette:
@@ -211,7 +211,7 @@ class Palette:
         dict[str, list[Colors]]
             single column where the header is the name of the palatte and the data are the colors
         '''
-        return {self.name: self.colors}
+        return {self.name: [color.show() for color in self.colors]}
 
     def __str__(self):
         return tabulate(self.table(), headers='keys')
