@@ -15,7 +15,7 @@ from collections.abc import Mapping
 
 ### GLOBAL VARS ###
 # jinja environment
-env = j2.Environment(loader=j2.FileSystemLoader(config.templates_dir))
+env = j2.Environment(loader=j2.FileSystemLoader(config.templates_dir), trim_blocks=True, lstrip_blocks=True)
 # default 'signature' to put in a comment at the top of templated files
 templated_signature = '@palette-cleanser'
 # templates to use when creating templates for user
@@ -126,9 +126,14 @@ class TemplateFile(Template, ABC):
         '''
         pass
 
-    @abstractmethod
-    def combine(destination: IO[AnyStr], current: IO[AnyStr] = None, default: IO[AnyStr] = None, overwrite: IO[AnyStr] = None):
-        '''combines default, current, and overwrite files and writes result to destination
+    def combine(
+            self,
+            destination: IO[AnyStr],
+            current: IO[AnyStr] = None,
+            default: IO[AnyStr] = None,
+            overwrite: IO[AnyStr] = None
+    ):
+        '''writes default, then current, then overwrite to destination
 
         Parameters
         ----------
@@ -141,7 +146,13 @@ class TemplateFile(Template, ABC):
         overwrite : IO[AnyStr], optional
             file whose elements will overwrite by user's current file
         '''
-        pass
+        if default:
+            destination.write(default.read())
+        if current:
+            destination.write(current.read())
+        if overwrite:
+            destination.write(overwrite.read())
+
 
     def create(self):
         '''create a template and save it to {config.templates_dir}'''
@@ -182,6 +193,8 @@ class TemplateFile(Template, ABC):
             theme that provides template variables
         '''
         destination = os.path.join(os.environ['HOME'], self.path)
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+
         output = env.get_template(self.path + '.j2').render(template_theme.export())
 
         if not self.is_templated():
@@ -225,32 +238,72 @@ class YAMLTemplateFile(TemplateFile):
         '''
         return f'# {templated_signature}\n'
 
-    def combine(
-            self,
-            destination: IO[AnyStr],
-            current: IO[AnyStr] = None,
-            default: IO[AnyStr] = None,
-            overwrite: IO[AnyStr] = None
-    ):
-        '''writes default, then current, then overwrite to destination
 
-        Parameters
-        ----------
-        destination : IO[AnyStr]
-            writable
-        current : IO[AnyStr], optional
-            user's current file
-        default : IO[AnyStr], optional
-            file whose elements will be overwritten by user's current file
-        overwrite : IO[AnyStr], optional
-            file whose elements will overwrite by user's current file
+@dataclass
+class RASITemplateFile(TemplateFile):
+    '''
+    represents a RASI file possibly containing jinja expressions
+
+    Attributes
+    ----------
+    path : str
+        relative filepath from home directory
+
+    Methods
+    -------
+    generate_signature()
+        returns comment to put at top of file to indicate it was templated by palette-cleanser
+    combine(destination, current, default, overwrite)
+        combines default, current, and overwrite files and writes result to destination
+    create()
+        create a template and save it to {config.templates_dir}
+    is_templated()
+        returns true if file at $HOME/{path} contains the template signature
+    template(template_theme)
+        populate template with variable values and save to $HOME
+    '''
+    def generate_signature(self) -> str:
+        '''returns comment to put at top of file to indicate it was templated by palette-cleanser
+
+        Returns
+        -------
+        str
+            comment to put at top of file to indicate it was templated by palette-cleanser
         '''
-        if default:
-            destination.write(default.read())
-        if current:
-            destination.write(current.read())
-        if overwrite:
-            destination.write(overwrite.read())
+        return f'/* {templated_signature} */\n'
+
+@dataclass
+class HaskellTemplateFile(TemplateFile):
+    '''
+    represents a Haskell file possibly containing jinja expressions
+
+    Attributes
+    ----------
+    path : str
+        relative filepath from home directory
+
+    Methods
+    -------
+    generate_signature()
+        returns comment to put at top of file to indicate it was templated by palette-cleanser
+    combine(destination, current, default, overwrite)
+        combines default, current, and overwrite files and writes result to destination
+    create()
+        create a template and save it to {config.templates_dir}
+    is_templated()
+        returns true if file at $HOME/{path} contains the template signature
+    template(template_theme)
+        populate template with variable values and save to $HOME
+    '''
+    def generate_signature(self) -> str:
+        '''returns comment to put at top of file to indicate it was templated by palette-cleanser
+
+        Returns
+        -------
+        str
+            comment to put at top of file to indicate it was templated by palette-cleanser
+        '''
+        return f'-- {templated_signature}\n'
 
 
 @dataclass
@@ -308,7 +361,9 @@ def resolve_template_file(path: str) -> TemplateFile:
 
     return {
         '.yml': YAMLTemplateFile,
-        '.yaml': YAMLTemplateFile
+        '.yaml': YAMLTemplateFile,
+        '.rasi': RASITemplateFile,
+        '.hs': HaskellTemplateFile
     }[ext](path)
 
 
