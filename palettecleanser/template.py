@@ -353,7 +353,7 @@ def template_managed(template_theme: theme.Theme):
     template_theme : theme.Theme
         theme that provides template variables
     '''
-    for path in config.get_config_settings()['managed_templates']:
+    for path in config.get_config_settings()['managed_files']:
         if isinstance(path, Mapping):
             # list element is a singleton dictionary whose key is the file
             # and value includes a list of ignored files

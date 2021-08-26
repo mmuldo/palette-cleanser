@@ -8,6 +8,7 @@ from tabulate import tabulate
 from PIL import Image
 from dataclasses import dataclass
 from functools import reduce
+from typing import Optional
 from . import config
 
 ### EXCEPTIONS ###
@@ -162,7 +163,7 @@ class Palette:
         converts palette to data that can be tabulated
     '''
     colors: list[Color]
-    name: str = None
+    name: Optional[str] = None
 
     def tone(self, percent: float, lighten: bool, name: str = None) -> Palette:
         '''lightens/darkens every color in palette by specified percent
@@ -281,7 +282,7 @@ def from_hexes(hexcodes: list[str], name: str = None) -> Palette:
     '''
     return Palette([from_hex(hexcode) for hexcode in hexcodes], name)
 
-def from_image(img: Image, name: str = None, base_palette: Palette = ansi_normal_palette, quantize_number: int = 64) -> Palette:
+def from_image(img: Image, name: Optional[str] = None, base_palette: Palette = ansi_normal_palette, quantize_number: int = 64) -> Palette:
     ''' constructs Palette object from an image (.jpg/.png file)
 
     Parameters
