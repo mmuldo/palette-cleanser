@@ -93,7 +93,7 @@ class Template(ABC):
         pass
 
 @dataclass
-class TemplateFile(Template, ABC):
+class TemplateFile(Template):
     '''
     represents a file possibly containing jinja expressions
 
@@ -203,30 +203,6 @@ class TemplateFile(Template, ABC):
             out_file.write(self.generate_signature())
             out_file.write(output)
 
-@dataclass
-class DefaultTemplateFile(TemplateFile):
-    '''
-    represents a file possibly containing jinja expressions
-
-    Attributes
-    ----------
-    path : str
-        relative filepath from home directory
-
-    Methods
-    -------
-    generate_signature()
-        returns comment to put at top of file to indicate it was templated by palette-cleanser
-    combine(destination, current, default, overwrite)
-        combines default, current, and overwrite files and writes result to destination
-    create()
-        create a template and save it to {config.templates_dir}
-    is_templated()
-        returns true if file at $HOME/{path} contains the template signature
-    template(template_theme)
-        populate template with variable values and save to $HOME
-    '''
-    pass
 
 @dataclass
 class YAMLTemplateFile(TemplateFile):
