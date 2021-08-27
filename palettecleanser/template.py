@@ -124,7 +124,7 @@ class TemplateFile(Template, ABC):
         str
             comment to put at top of file to indicate it was templated by palette-cleanser
         '''
-        pass
+        return f'# {templated_signature}\n'
 
     def combine(
             self,
@@ -360,6 +360,7 @@ def resolve_template_file(path: str) -> TemplateFile:
     ext = os.path.splitext(path)[1]
 
     return {
+        '': TemplateFile,
         '.yml': YAMLTemplateFile,
         '.yaml': YAMLTemplateFile,
         '.rasi': RASITemplateFile,
