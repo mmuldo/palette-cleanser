@@ -115,7 +115,6 @@ class TemplateFile(Template, ABC):
     template(template_theme)
         populate template with variable values and save to $HOME
     '''
-    @abstractmethod
     def generate_signature(self) -> str:
         '''returns comment to put at top of file to indicate it was templated by palette-cleanser
 
@@ -384,7 +383,7 @@ def resolve_template_file(path: str) -> TemplateFile:
     ext = os.path.splitext(path)[1]
 
     return {
-        '': DefaultTemplateFile,
+        '': TemplateFile,
         '.yml': YAMLTemplateFile,
         '.yaml': YAMLTemplateFile,
         '.rasi': RASITemplateFile,
