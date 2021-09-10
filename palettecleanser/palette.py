@@ -8,7 +8,8 @@ from tabulate import tabulate
 from PIL import Image
 from dataclasses import dataclass
 from functools import reduce
-from typing import Optional
+from typing import Optional, Callable
+
 from . import config
 
 ### EXCEPTIONS ###
@@ -219,17 +220,34 @@ class Palette:
 
 
 ### GLOBAL VARS AND OBJECTS ###
-ansi_normal_colors = {
-    'black':    Color(0,     0,      0),
-    'red':      Color(170,   0,      0),
-    'green':    Color(0,     170,    0),
-    'yellow':   Color(170,   170,    0),
-    'blue':     Color(0,     0,      170),
-    'purple':   Color(170,   0,      170),
-    'cyan':     Color(0,     170,    170),
-    'white':    Color(170,   170,    170)
-}
-ansi_normal_palette = Palette([rgb for rgb in ansi_normal_colors.values()], "ansi-normal")
+ansi_normal_palette = Palette(
+    [
+        Color(0,     0,      0),    # black
+        Color(170,   0,      0),    # red
+        Color(0,     170,    0),    # green
+        Color(170,   170,    0),    # yellow
+        Color(0,     0,      170),  # blue
+        Color(170,   0,      170),  # purple
+        Color(0,     170,    170),  # cyan
+        Color(170,   170,    170)   # white
+    ],
+    'ansi-normal'
+)
+
+axarva_palette = Palette(
+    [
+        Color(33,   33,     33),    # black
+        Color(240,  113,    120),   # red
+        Color(195,  232,    141),   # green
+        Color(255,  203,    107),   # yellow
+        Color(130,  170,    255),   # blue
+        Color(199,  146,    234),   # purple
+        Color(137,  221,    255),   # cyan
+        Color(238,  255,    255),   # white
+    ],
+    'axarva'
+)
+
 
 
 ### FUNCTIONS ###
@@ -282,30 +300,119 @@ def from_hexes(hexcodes: list[str], name: str = None) -> Palette:
     '''
     return Palette([from_hex(hexcode) for hexcode in hexcodes], name)
 
-def from_image(img: Image, name: Optional[str] = None, base_palette: Palette = ansi_normal_palette, quantize_number: int = 64) -> Palette:
-    ''' constructs Palette object from an image (.jpg/.png file)
+
+def from_ordered_colors_match(
+        colors: list[Colors],
+        name: Optional[str] = None,
+        base_palette: Palette = axarva_palette
+) -> Palette:
+    '''generates palette from list of colors in decreasing order of amount
+
+    the algorithm works by iterating through the provided list of colors and,
+    for each color, assigning it to the position that the most similar color in
+    the base palette occupies; e.g. if #000000 (black) occupies the 0th position
+    in the base palette and the current color being examined is most silimar to
+    #000000 then the current color will occupy the 0th position in the generated
+    palette
 
     Parameters
     ----------
-    img : Image
-        from .jpg/.png file
-    name : str
-        name of palette
+    colors : list[Colors]
+        list of colors ordered from most frequently appeared to least frequenty appeared
+    name : str, optional
+        name to give to palette (default is None)
     base_palette : Palette, optional
-        Palette to base the new palette off of. The default is palette.ansi_normal_palette (the 8 ansi
-        normal colors), so in the default case this function will iterate through each of these colors
-        and select the color from the quantized image that is most similar to add to the new palette.
-    quantize_number : int, optional
-        number of colors to quantize the image to and thus select colors from (default is 64)
+        Palette to base the new palette off of (default is axarva_palette, see https://github.com/Axarva/dotfiles-2.0/blob/main/config/alacritty.yml)
 
     Returns
     -------
     Palette
         color palette with len(base_palette.colors) number of colors
     '''
+    indices, base_colors = list(range(len(base_palette.colors))), base_palette.colors.copy()
+
+    palette_colors = [None for _ in range(len(base_palette.colors))]
+
+    for color in colors:
+        if not base_colors:
+            break
+
+        i = color.closest(base_colors)
+        j, _ = indices.pop(i), base_colors.pop(i)
+
+        palette_colors[j] = color
+
+    return Palette(palette_colors, name)
+
+def from_ordered_colors_find(
+        colors: list[Colors],
+        name: Optional[str] = None,
+        base_palette: Palette = axarva_palette
+) -> Palette:
+    '''generates palette from list of colors in decreasing order of amount
+
+    the algorithm works by iterating through the colors of the base palette and,
+    for each base color, finding the most similar color in the provided list of
+    colors and assigning it to the position that the current base color occupies
+    in the base palette; e.g. if #000000 (black) occupies the 0th position
+    in the base palette, the color most similar to #000000 in the provided list
+    of colors will occupy the 0th position in the generated palette
+
+    Parameters
+    ----------
+    colors : list[Colors]
+        list of colors ordered from most frequently appeared to least frequenty appeared
+    base_palette : Palette, optional
+        Palette to base the new palette off of (default is axarva_palette, see https://github.com/Axarva/dotfiles-2.0/blob/main/config/alacritty.yml)
+    name : str, optional
+        name to give to palette (default is None)
+
+    Returns
+    -------
+    Palette
+        color palette with len(base_palette.colors) number of colors
+    '''
+    base_colors = base_palette.colors.copy()
+
+    return Palette([colors.pop(base_color.closest(colors)) for base_color in base_colors], name)
+
+generation_algorithms = {
+    'from_ordered_colors_match': from_ordered_colors_match,
+    'from_ordered_colors_find': from_ordered_colors_find
+}
+
+
+def from_image(
+        img: Image,
+        name: Optional[str] = None,
+        quantize_number: int = 64,
+        algorithm=from_ordered_colors_match,
+        **algorithm_parameters
+) -> Palette:
+    '''constructs Palette object from an image (.jpg/.png file) using the provided algorithm
+
+    Parameters
+    ----------
+    img : Image
+        from .jpg/.png file
+    name : str, optional
+        name of palette (default is None)
+    quantize_number : int, optional
+        number of colors to quantize the image to and thus select colors from (default is 64)
+    algorithm : (list[Colors], **params) -> Palette
+        algorithm to use for converting a list of colors to a palette
+    **algorithm_parameters
+        keyword arguments which algorithm accepts in addition to a list of colors and name of palette
+
+    Returns
+    -------
+    Palette
+        color palette based off of provided image
+    '''
     colors = [Color(*rgb) for rgb, _ in img.quantize(colors=quantize_number, method=Image.MAXCOVERAGE).palette.colors.items()]
 
-    return Palette([colors.pop(base_color.closest(colors)) for base_color in base_palette.colors], name)
+    return algorithm(colors, name, **algorithm_parameters)
+
 
 def from_config(name: str) -> Palette:
     '''pulls existing palette from config

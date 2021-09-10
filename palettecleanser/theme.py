@@ -9,7 +9,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from PIL import Image
 from functools import reduce
-from typing import Any
+from typing import Any, Optional
 
 ### EXCEPTIONS ###
 class ThemeNotFoundError(Exception):
@@ -101,11 +101,14 @@ class Theme:
         return tabulate(self.table(), headers='keys')
 
 ### FUNCTIONS ###
-def from_image(img: Image,
-               name: str,
-               settings: dict[str, Any] = {},
-               base_palette: pal.Palette = pal.ansi_normal_palette,
-               quantize_number: int = 64) -> Theme:
+def from_image(
+        img: Image,
+        name: str,
+        settings: Optional[dict[str, Any]] = None,
+        quantize_number: int = 64,
+        algorithm=pal.from_ordered_colors_match,
+        **algorithm_parameters
+) -> Theme:
     '''generates a theme from an image
 
     The generated theme consists of three palettes: a palette generated from
@@ -121,25 +124,25 @@ def from_image(img: Image,
         name of theme
     settings : dict[str, Any], optional
         additional settings to initialize new theme with (default is {})
-    base_palette : palette.Palette, optional
-        Palette to base the new palette off of. The default is palette.ansi_normal_palette (the 8 ansi
-        normal colors), so in the default case this function will iterate through each of these colors
-        and select the color from the quantized image that is most similar to add to the new palette.
     quantize_number : int, optional
         number of colors to quantize the image to and thus select colors from (default is 64)
+    algorithm : (list[Colors], **params) -> palette.Palette
+        algorithm to use for converting a list of colors to a palette
+    **algorithm_parameters
+        keyword arguments which algorithm accepts in addition to a list of colors and name of palette
 
     Returns
     -------
     Theme
         new theme based off of provided image
     '''
-    main_palette = pal.from_image(img, name, base_palette, quantize_number)
+    main_palette = pal.from_image(img, name, quantize_number, algorithm, **algorithm_parameters)
     dark_palette = main_palette.tone(35, False, name + "-dark")
     light_palette = main_palette.tone(20, True, name + "-light")
     for p in [main_palette, dark_palette, light_palette]:
         p.save()
 
-    return Theme(name, [name + tail for tail in ["", "-dark", "-light"]], img.filename, settings)
+    return Theme(name, [name + tail for tail in ["", "-dark", "-light"]], img.filename, settings if settings else {})
 
 def from_config(name: str) -> Theme:
     '''pulls existing theme from config
