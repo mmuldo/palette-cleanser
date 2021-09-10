@@ -22,7 +22,7 @@ class TestTheme:
         monkeypatch.setattr('builtins.input', lambda _: 'y')
         monkeypatch.setattr(config, 'palettes_dir', os.path.join(os.path.dirname(__file__), 'test_data/fake_config/palettes'))
         with Image.open(os.path.join(os.path.dirname(__file__), 'test_data/muruusa-mountain.jpg')) as img:
-            t = theme.from_image(img, 'muruusa')
+            t = theme.from_image(img, 'muruusa3')
             print()
             print(t)
 

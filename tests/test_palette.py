@@ -14,7 +14,7 @@ class TestColor:
         color = palette.Color(3, 254, 253)
 
         # cyan has index 6 in base_colors
-        assert color.closest(list(palette.ansi_normal_colors.values())) == 6
+        assert color.closest(palette.ansi_normal_palette.colors) == 6
 
     def test_tone_darken(self):
         color = palette.Color(40, 50, 60)
@@ -102,8 +102,14 @@ class TestPalette:
         with pytest.raises(palette.PaletteNotFoundError) as e:
             palette.from_config('garbage garbage garbage')
 
-    def test_from_image(self):
+    def test_from_ordered_colors_match(self):
         with Image.open(os.path.join(os.path.dirname(__file__), 'test_data/muruusa-mountain.jpg')) as img:
-            p = palette.from_image(img)
+            p = palette.from_image(img, algorithm=palette.from_ordered_colors_match)
+            print()
+            print(p)
+
+    def test_from_ordered_colors_find(self):
+        with Image.open(os.path.join(os.path.dirname(__file__), 'test_data/muruusa-mountain.jpg')) as img:
+            p = palette.from_image(img, algorithm=palette.from_ordered_colors_find)
             print()
             print(p)
