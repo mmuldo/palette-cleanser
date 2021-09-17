@@ -4,6 +4,10 @@ version = "0.1.0"
 description = ""
 authors = ["Matt Muldowney <matt.muldowney@gmail.com>"]
 readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/mmuldo/palette-cleanser"
+documentation = "https://github.com/mmuldo/palette-cleanser/wiki"
+keywords = ["dotfiles", "configuration", "customization", "colorscheme", "palette"]
 
 [tool.poetry.scripts]
 pclean = "palettecleanser.cli.main:app"
