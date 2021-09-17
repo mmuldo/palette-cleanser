@@ -1,13 +1,15 @@
-from palettecleanser import theme
-from palettecleanser import template
-from palettecleanser import config
-from palettecleanser import palette as pal
+from .. import theme
+from .. import template
+from .. import config
+from .. import palette as pal
 from typing import Optional, Any
 from PIL import Image, UnidentifiedImageError
 
 import typer
+import subprocess
 import sys
 import os
+import jinja2 as j2
 
 app = typer.Typer(help=f'''manages your themes
 
@@ -31,12 +33,15 @@ def ls():
         print(os.path.splitext(theme_file)[0])
 
 
-# TODO: add support for specific templates
 # TODO: add some sort of loading/processing text
+# TODO: exception handling for template errors
 @app.command(help=f'''evaluates jinja2 in managed templates and
-saves them to their respective paths under {os.environ['HOME']}''')
+saves them to their respective paths under {os.environ['HOME']}
+
+if --template option is passed, only evaluates that specific template ''')
 def deploy(
-        name: str = typer.Argument(..., help='name of saved theme')
+        name: str = typer.Argument(..., help='name of saved theme'),
+        path: Optional[str] = typer.Option(None, '--template', metavar='PATH', help='path to configuration file relative to $HOME')
 ):
     try:
         t = theme.from_config(name)
@@ -45,7 +50,14 @@ def deploy(
         print(f"check that '{name}.yml' exists in '{config.themes_dir}'", file=sys.stderr)
         raise typer.Exit(1)
 
-    template.template_managed(t)
+    try:
+        if path:
+            template.TemplateFile(path).template(t)
+        else:
+            template.template_managed(t)
+    except j2.exceptions.TemplateNotFound:
+        print(f"couldn't find '{path}' in saved templates", file=sys.stderr)
+        print(f"check that '{config.themes_dir}/{path}.j2' exists", file=sys.stderr)
 
 
 @app.command(help=f'''creates theme from a list of palettes, name, image path, and additional settings
@@ -56,9 +68,17 @@ def create(
         image_path: str = typer.Option(..., metavar='PATH', help='path to background image'),
         setting: Optional[list[str]] = typer.Option(None, metavar='KEY=VALUE', help='additional settings to initialize new theme with')
 ):
-    t = theme.Theme(name, palettes, image_path, {k: v for k, v in [single_setting.split('=') for single_setting in setting]})
-    print(t)
+    try:
+        t = theme.Theme(name, palettes, image_path, {k: v for k, v in [single_setting.split('=') for single_setting in setting]})
+        print(t)
+    except pal.PaletteNotFoundError as e:
+        print(e, file=sys.stderr)
+        print(f"check that it exists in '{config.palettes_dir}'", file=sys.stderr)
+        raise typer.Exit(1)
+
     t.save()
+    print(f'"{name}" saved to {config.themes_dir}/{name}.yml')
+
 
 def generate_from_image(
         image_path: str,
@@ -122,3 +142,14 @@ def remove(name: str = typer.Argument(..., help='name of theme to remove from co
         raise typer.Exit(1)
 
     print(f'"{name}" successfully removed from saved themes')
+
+
+@app.command()
+def edit(name: str = typer.Argument(..., help='name of theme to edit')):
+    '''edit theme with $EDITOR'''
+    try:
+        editor = os.environ['EDITOR']
+    except KeyError:
+        editor = input('"$EDITOR" environment variable is not defined; please enter the text editor you would like to use: ')
+
+    subprocess.run([editor, os.path.join(config.themes_dir, f'{name}.yml')])

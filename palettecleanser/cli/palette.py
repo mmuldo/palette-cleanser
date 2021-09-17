@@ -1,9 +1,10 @@
-from palettecleanser import palette as pal
-from palettecleanser import config
+from .. import palette as pal
+from .. import config
 from typing import Optional, Any
 from PIL import Image, UnidentifiedImageError
 
 import typer
+import subprocess
 import sys
 import os
 
@@ -38,11 +39,18 @@ def create(
         colors: list[str] = typer.Argument(..., help='space delimited list of "#rrggbb" formatted colors'),
         name: Optional[str] = typer.Option(None, metavar='NAME', help=f'saves the palette to "{config.palettes_dir}" with specified name')
 ):
-    p = pal.Palette([pal.from_hex(color) for color in colors], name)
+    try:
+        p = pal.Palette([pal.from_hex(color) for color in colors], name)
+    except pal.MalformedHexError as e:
+        print(e, file=sys.stderr)
+        raise typer.Exit(1)
+
     print(p)
 
     if name:
         p.save()
+        print(f'"{name}" saved to {config.palettes_dir}/{name}.yml')
+
 
 
 def generate_from_image(
@@ -69,6 +77,7 @@ def generate_from_image(
     print(p)
     if name:
         p.save()
+        print(f'"{name}" saved to {config.palettes_dir}/{name}.yml')
 
 
 # TODO: --help type flag for available algorithms
@@ -104,3 +113,14 @@ def remove(name: str = typer.Argument(..., help='name of palette to remove from 
         raise typer.Exit(1)
 
     print(f'"{name}" successfully removed from saved palettes')
+
+
+@app.command()
+def edit(name: str = typer.Argument(..., help='name of palette to edit')):
+    '''edit palette with $EDITOR'''
+    try:
+        editor = os.environ['EDITOR']
+    except KeyError:
+        editor = input('"$EDITOR" environment variable is not defined; please enter the text editor you would like to use: ')
+
+    subprocess.run([editor, os.path.join(config.palettes_dir, f'{name}.yml')])
