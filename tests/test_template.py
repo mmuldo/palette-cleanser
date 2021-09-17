@@ -113,6 +113,40 @@ class TestTemplate:
             [template.TemplateFile('test_template_dir2/test_template_template4.hs')]
         )
 
+    def test_from_paths(self, monkeypatch):
+        monkeypatch.setattr(os, 'environ', os.environ | {'HOME': os.path.join(os.path.dirname(__file__), 'test_data/fake_home')})
+        tmpl_dir_path = os.path.join(os.path.dirname(__file__), 'test_data', 'fake_config', 'templates')
+        monkeypatch.setattr(config, 'templates_dir', tmpl_dir_path)
+
+        assert template.from_paths(
+            config.templates_dir,
+            [
+                'test_template_template0',
+                {'test_template_dir2': {
+                    'ignored_files': ['test_template_template3.rasi']
+                }}
+            ]
+        ) == [
+            template.TemplateFile('test_template_template0'),
+            template.TemplateDirectory(
+                'test_template_dir2',
+                [template.TemplateFile('test_template_dir2/test_template_template4.hs')]
+            )]
+
+    def test_create_managed(self, monkeypatch):
+        monkeypatch.setattr(config, 'config_dir', os.path.join(os.path.dirname(__file__), 'test_data/fake_config'))
+        monkeypatch.setattr(config, 'templates_dir', os.path.join(os.path.dirname(__file__), 'test_data/fake_config/templates'))
+        monkeypatch.setattr(os, 'environ', os.environ | {'HOME': os.path.join(os.path.dirname(__file__), 'test_data/fake_home')})
+        config_settings = {'managed_files': [{'test_template_dir4': {
+            'ignored_files': ['test_template_template7']
+        }}]}
+        monkeypatch.setattr(config, 'get_config_settings', lambda: config_settings)
+
+        template.create_managed()
+
+        assert not os.path.exists(os.path.join(config.templates_dir, 'test_template_dir4/test_template_template7.j2'))
+        assert os.path.exists(os.path.join(config.templates_dir, 'test_template_dir4/test_template_template8.j2'))
+
     def test_template_managed(self, monkeypatch):
         monkeypatch.setattr(config, 'config_dir', os.path.join(os.path.dirname(__file__), 'test_data/fake_config'))
         monkeypatch.setattr(config, 'templates_dir', os.path.join(os.path.dirname(__file__), 'test_data/fake_config/templates'))
