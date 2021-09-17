@@ -9,7 +9,7 @@ from . import theme
 from . import config
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import IO, AnyStr, Optional
+from typing import IO, AnyStr, Optional, Union
 from collections.abc import Mapping
 
 
@@ -279,6 +279,41 @@ def from_path(root: str, path: str, ignored_files: list[str] = []) -> Template:
     )
 
 
+def from_paths(root: str, paths: list[Union(str, dict[str, Any])]) -> list[Template]:
+    '''creates list of Templates from list of paths that exists under specified root
+
+    Parameters
+    ----------
+    root : str
+        root directory under which path exists (e.g. $HOME)
+    paths : list[Union(str, dict[str, Any])]
+        file/directory paths (relative to root), where each path might be a
+        dictionary whose single value is an 'ignored_files' list
+
+    Returns
+    -------
+    list[Template]
+        list of template objects corresponding to the provided file paths
+    '''
+    ts = []
+
+    for path in paths:
+        if isinstance(path, Mapping):
+            # list element is a singleton dictionary whose key is the file
+            # and value includes a list of ignored files
+            for k, v in path.items():
+                ts.append(from_path(root, k, v['ignored_files']))
+        else:
+            # list element is just a file name
+            ts.append(from_path(root, path))
+
+    return ts
+
+def create_managed():
+    '''create templates for all listed managed files and save to {config.templates_dir}'''
+    for t in from_paths(os.environ['HOME'], config.get_config_settings()['managed_files']):
+        t.create()
+
 def template_managed(template_theme: theme.Theme):
     '''populate all listed managed files with variable values from provided theme and write to $HOME
 
@@ -287,12 +322,15 @@ def template_managed(template_theme: theme.Theme):
     template_theme : theme.Theme
         theme that provides template variables
     '''
-    for path in config.get_config_settings()['managed_files']:
-        if isinstance(path, Mapping):
-            # list element is a singleton dictionary whose key is the file
-            # and value includes a list of ignored files
-            for k, v in path.items():
-                from_path(config.templates_dir, k, v['ignored_files']).template(template_theme)
-        else:
-            # list element is just a file name
-            from_path(config.templates_dir, path).template(template_theme)
+    for t in from_paths(config.templates_dir, config.get_config_settings()['managed_files']):
+        t.template(template_theme)
+
+    # for path in config.get_config_settings()['managed_files']:
+    #     if isinstance(path, Mapping):
+    #         # list element is a singleton dictionary whose key is the file
+    #         # and value includes a list of ignored files
+    #         for k, v in path.items():
+    #             from_path(config.templates_dir, k, v['ignored_files']).template(template_theme)
+    #     else:
+    #         # list element is just a file name
+    #         from_path(config.templates_dir, path).template(template_theme)
