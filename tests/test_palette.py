@@ -1,6 +1,5 @@
 from palettecleanser import palette
 from palettecleanser import config
-from PIL import Image
 import os
 import pytest
 
@@ -102,14 +101,19 @@ class TestPalette:
         with pytest.raises(palette.PaletteNotFoundError) as e:
             palette.from_config('garbage garbage garbage')
 
-    def test_from_ordered_colors_match(self):
-        with Image.open(os.path.join(os.path.dirname(__file__), 'test_data/muruusa-mountain.jpg')) as img:
-            p = palette.from_image(img, algorithm=palette.from_ordered_colors_match)
-            print()
-            print(p)
+    def test_from_image(self):
+        image_path = os.path.join(os.path.dirname(__file__), 'test_data/muruusa-mountain.jpg')
+        p = palette.from_image(image_path, )
+        print()
+        print(p)
 
-    def test_from_ordered_colors_find(self):
-        with Image.open(os.path.join(os.path.dirname(__file__), 'test_data/muruusa-mountain.jpg')) as img:
-            p = palette.from_image(img, algorithm=palette.from_ordered_colors_find)
-            print()
-            print(p)
+    def test_from_image_light_saturate(self):
+        image_path = os.path.join(os.path.dirname(__file__), 'test_data/muruusa-mountain.jpg')
+        p = palette.from_image(image_path, light=True, saturate_percent = 50)
+        print()
+        print(p)
+
+    def test_from_image_missing_backend(self):
+        with pytest.raises(SystemExit):
+            image_path = os.path.join(os.path.dirname(__file__), 'test_data/muruusa-mountain.jpg')
+            p = palette.from_image(image_path, backend='colorthief')

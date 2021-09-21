@@ -7,7 +7,6 @@ from . import config
 from tabulate import tabulate
 from collections import defaultdict
 from dataclasses import dataclass
-from PIL import Image
 from functools import reduce
 from typing import Any, Optional
 
@@ -102,12 +101,12 @@ class Theme:
 
 ### FUNCTIONS ###
 def from_image(
-        img: Image,
+        image_path: str,
         name: str,
         settings: Optional[dict[str, Any]] = None,
-        quantize_number: int = 64,
-        algorithm=pal.from_ordered_colors_match,
-        **algorithm_parameters
+        light: bool = False,
+        backend: str = 'wal',
+        saturate_percent: Optional[float] = None
 ) -> Theme:
     '''generates a theme from an image
 
@@ -117,32 +116,34 @@ def from_image(
 
     Parameters
     ----------
-    img : Image
-        image with which to generate the palettes for the theme; it also
+    image_path : str
+        path image with which to generate the palettes for the theme; it also
         serves as the associated image for the theme
     name : str
         name of theme
     settings : dict[str, Any], optional
         additional settings to initialize new theme with (default is {})
-    quantize_number : int, optional
-        number of colors to quantize the image to and thus select colors from (default is 64)
-    algorithm : (list[Colors], **params) -> palette.Palette
-        algorithm to use for converting a list of colors to a palette
-    **algorithm_parameters
-        keyword arguments which algorithm accepts in addition to a list of colors and name of palette
+    light : bool, optional
+        True to generate a light color theme, False to generate a dark color
+        theme (default is False)
+    backend : str, optional
+        pywal backend generation algorithm to use (see more at
+        https://github.com/dylanaraps/pywal/tree/master/pywal/backends) (default is 'wal')
+    saturate_percent : float, optional
+        amount to saturate colors by (saturate_percent=5 means 5%) (default is None)
 
     Returns
     -------
     Theme
         new theme based off of provided image
     '''
-    main_palette = pal.from_image(img, name, quantize_number, algorithm, **algorithm_parameters)
+    main_palette = pal.from_image(image_path, name, light, backend, saturate_percent)
     dark_palette = main_palette.tone(35, False, name + "-dark")
     light_palette = main_palette.tone(20, True, name + "-light")
     for p in [main_palette, dark_palette, light_palette]:
         p.save()
 
-    return Theme(name, [name + tail for tail in ["", "-dark", "-light"]], img.filename, settings if settings else {})
+    return Theme(name, [name + tail for tail in ["", "-dark", "-light"]], image_path, settings if settings else {})
 
 def from_config(name: str) -> Theme:
     '''pulls existing theme from config

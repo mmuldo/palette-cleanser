@@ -1,7 +1,6 @@
 from palettecleanser import palette
 from palettecleanser import theme
 from palettecleanser import config
-from PIL import Image
 import os
 import pytest
 
@@ -21,10 +20,9 @@ class TestTheme:
     def test_from_image(self, monkeypatch):
         monkeypatch.setattr('builtins.input', lambda _: 'y')
         monkeypatch.setattr(config, 'palettes_dir', os.path.join(os.path.dirname(__file__), 'test_data/fake_config/palettes'))
-        with Image.open(os.path.join(os.path.dirname(__file__), 'test_data/muruusa-mountain.jpg')) as img:
-            t = theme.from_image(img, 'muruusa3')
-            print()
-            print(t)
+        t = theme.from_image(os.path.join(os.path.dirname(__file__), 'test_data/muruusa-mountain.jpg'), name='muruusa3')
+        print()
+        print(t)
 
     def test_from_config(self, monkeypatch):
         monkeypatch.setattr('builtins.input', lambda _: 'y')
