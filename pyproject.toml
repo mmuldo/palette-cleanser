@@ -16,10 +16,10 @@ pclean = "palettecleanser.cli.main:app"
 python = "^3.9"
 Jinja2 = "^3.0.1"
 numpy = "^1.21.1"
-Pillow = "^8.3.1"
 PyYAML = "^5.4.1"
 tabulate = "^0.8.9"
 typer = {extras = ["all"], version = "^0.3.2"}
+pywal = "^3.3.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

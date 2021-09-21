@@ -1,7 +1,6 @@
 from .. import palette as pal
 from .. import config
 from typing import Optional, Any
-from PIL import Image, UnidentifiedImageError
 
 import typer
 import subprocess
@@ -56,22 +55,18 @@ def create(
 def generate_from_image(
         image_path: str,
         name: Optional[str] = None,
-        quantize_number: int = 64,
-        algorithm: str = 'from_ordered_colors_match',
-        **algorithm_parameters
+        light: bool = False,
+        backend: str = 'wal',
+        saturate_percent: Optional[float] = None
 ):
     '''generates palette from image
 
     see palettecleanser.palette.from_image for more details
     '''
     try:
-        with Image.open(image_path) as img:
-            p = pal.from_image(img, name, quantize_number, pal.generation_algorithms[algorithm], **algorithm_parameters)
-    except FileNotFoundError:
-        print(f"No such file or directory: '{image_path}'", file=sys.stderr)
-        raise typer.Exit(1)
-    except UnidentifiedImageError:
-        print(f"'{image_path}' is not an image", file=sys.stderr)
+        p = pal.from_image(image_path, name, light, backend, saturate_percent)
+    except:
+        print(f"'{image_path}' either couldn't be found or isn't an image", file=sys.stderr)
         raise typer.Exit(1)
 
     print(p)
@@ -88,18 +83,19 @@ where it can be manually edited later''')
 def generate(
         from_image: str = typer.Option('', metavar='PATH', help='generate palette from image at the specified path'),
         name: Optional[str] = typer.Option(None, metavar='NAME', help=f'saves the palette to "{config.palettes_dir}" with specified name'),
-        quantize_number: int = typer.Option(64, metavar='QUANTIZE_NUMBER', help='if generating from image, specifies the number of colors to quantize the image to and thus select colors from; --from-image option must be passed'),
-        algorithm: str = typer.Option('from_ordered_colors_match', metavar='ALGORITHM', help='if generating from image, specifies thealgorithm to use for converting a list of colors to a palette;  --from-image option must be passed'),
-        algorithm_parameter: Optional[list[str]] = typer.Option(None, metavar='KEY=VALUE', help='if generating from image, specifies keyword arguments which algorithm accepts in addition to a list of colors and name of palette; --algorithm option must be passed')
+        light: bool = typer.Option(False, help='generate a light color palette'),
+        backend: str = typer.Option('wal', metavar='BACKEND', help='pywal backend to use for image-to-palette algorithm; --from-image must be passed'),
+        saturate_percent: Optional[float] = typer.Option(None, metavar='PERCENTAGE', help=f'amount to saturate colors by (5 means 5%)')
 ):
     if from_image:
         generate_from_image(
             from_image,
             name,
-            quantize_number,
-            algorithm,
-            **{k: v for k, v in [param.split('=') for param in algorithm_parameter]}
+            light,
+            backend,
+            saturate_percent
         )
+
 
 
 @app.command()

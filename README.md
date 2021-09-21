@@ -1,6 +1,6 @@
 # Palette Cleanser
 
-We all know that refreshing senstation of setting our desktop applications to a
+We all know that refreshing sensation of setting our desktop applications to a
 delicious color scheme such as [Dracula](https://draculatheme.com/) or
 [Nord](https://www.nordtheme.com/). But even the tastiest of color schemes can
 grow bland after awhile, leaving you craving a new flavor for your desktop apps.
@@ -18,7 +18,7 @@ Python 3.9+
 
 * Jinja2 3.0.1+
 * numpy 1.21.1+
-* Pillow 8.3.1+
+* pywal 3.3.0+
 * PyYAML 5.4.1+
 * tabulate 0.8.9+
 * typer 0.3.2+
