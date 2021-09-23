@@ -12,6 +12,7 @@ from typing import Any, Optional
 
 ### EXCEPTIONS ###
 class ThemeNotFoundError(Exception):
+    '''thrown when theme is not found in palette-cleanser configuration'''
     pass
 
 ### CLASSES ###
@@ -31,11 +32,6 @@ class Theme:
         background wallpaper for the desktop)
     settings : dict[str, Any], optional
         additional settings accessible to templates under the "settings" dictionary (default is {})
-
-    Methods
-    -------
-    save()
-        saves theme to local palette-cleanser configuration
     '''
     name: str
     palettes: list[str]
@@ -97,7 +93,11 @@ class Theme:
         return reduce(lambda x, y: x|y, palette_tables)
 
     def __str__(self):
-        return tabulate(self.table(), headers='keys')
+        non_palettes_info = vars(self).copy()
+        del non_palettes_info['palettes']
+        del non_palettes_info['name']
+
+        return tabulate(self.table(), headers='keys') + '\n\n' + yaml.dump(non_palettes_info)
 
 ### FUNCTIONS ###
 def from_image(
