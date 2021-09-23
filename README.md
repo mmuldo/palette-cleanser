@@ -1,5 +1,7 @@
 # Palette Cleanser
 
+![example desktops](docs/img/desktop.gif)
+
 We all know that refreshing sensation of setting our desktop applications to a
 delicious color scheme such as [Dracula](https://draculatheme.com/) or
 [Nord](https://www.nordtheme.com/). But even the tastiest of color schemes can

@@ -14,9 +14,11 @@ from . import config
 
 ### EXCEPTIONS ###
 class MalformedHexError(Exception):
+    '''thrown when a hexcode is not of the form #rrggbb'''
     pass
 
 class PaletteNotFoundError(Exception):
+    '''thrown when a palette is not found in palette-cleanser configuration'''
     pass
 
 ### CLASSES ###
@@ -33,19 +35,6 @@ class Color:
         green component
     blue : int
         blue component
-
-    Methods
-    -------
-    distance(color)
-        computes distance to another Color
-    closest(colors)
-        finds the most similar element out of a list of colors
-    tone(percent, lighten)
-        lightens/darkens current object by specified percent
-    spectrum(color, n)
-        generates a spectrum from the current object to given color with n increments
-    hex()
-        calculates hex code
     '''
     red: int
     green: int
@@ -153,15 +142,6 @@ class Palette:
         base colors of palette
     name : str, optional
         name of palette (default is None)
-
-    Methods
-    -------
-    tone(percent, lighten, name=None)
-        lightens/darkens every color in palette by specified percent
-    save()
-        saves palette to local palette-cleanser configuration
-    table()
-        converts palette to data that can be tabulated
     '''
     colors: list[Color]
     name: Optional[str] = None

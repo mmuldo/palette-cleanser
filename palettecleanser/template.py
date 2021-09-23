@@ -70,13 +70,6 @@ class Template(ABC):
     ----------
     path : str
         relative filepath from home directory
-
-    Methods
-    -------
-    create()
-        create a template and save it to {config.templates_dir}
-    template(template_theme)
-        populate template with variable values and save to $HOME
     '''
     path: str
 
@@ -105,19 +98,6 @@ class TemplateFile(Template):
     ----------
     path : str
         relative filepath from home directory
-
-    Methods
-    -------
-    generate_signature()
-        returns comment to put at top of file to indicate it was templated by palette-cleanser
-    combine(destination, current, default, overwrite)
-        combines default, current, and overwrite files and writes result to destination
-    create()
-        create a template and save it to {config.templates_dir}
-    is_templated()
-        returns true if file at $HOME/{path} contains the template signature
-    template(template_theme)
-        populate template with variable values and save to $HOME
     '''
     def generate_signature(self) -> str:
         '''returns comment to put at top of file to indicate it was templated by palette-cleanser
@@ -212,13 +192,6 @@ class TemplateDirectory(Template):
         relative filepath from home directory
     children : list[Template]
         list of Templates in directory
-
-    Methods
-    -------
-    create()
-        create a template and save it to {config.templates_dir} for each child template
-    template(template_theme)
-        populate template with variable values and save to $HOME for each child template
     '''
     children: list[Template]
 
