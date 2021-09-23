@@ -8,7 +8,7 @@ delicious color scheme such as [Dracula](https://draculatheme.com/) or
 grow bland after awhile, leaving you craving a new flavor for your desktop apps.
 
 Palette Cleanser provides a means for storing your configuration files as
-templates and you color palettes as deployable desktop themes so that you can
+templates and your color palettes as deployable desktop themes so that you can
 avoid the hassle of manually editing hex codes when switching your
 applications to a new color scheme.
 
