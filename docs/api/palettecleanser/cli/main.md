@@ -1,2 +1,0 @@
-Module palettecleanser.cli.main
-===============================
