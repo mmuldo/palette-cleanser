@@ -52,6 +52,21 @@ class TestTemplateFile:
         with open(os.path.join(os.environ['HOME'], 'test_template_template2.yml')) as f:
             assert yaml.load(f, Loader=yaml.Loader) == {'colors': ['hi']}
 
+    def test_template_shebang(self, monkeypatch):
+        monkeypatch.setattr(os, 'environ', os.environ | {'HOME': os.path.join(os.path.dirname(__file__), 'test_data', 'fake_home')})
+        tmpl_dir_path = os.path.join(os.path.dirname(__file__), 'test_data', 'fake_config', 'templates')
+        monkeypatch.setattr(config, 'templates_dir', tmpl_dir_path)
+        env = j2.Environment(loader=j2.FileSystemLoader(config.templates_dir))
+        monkeypatch.setattr(template, 'env', env)
+
+        t = theme.Theme('theme name', [], '', {'test': 'hi'})
+        template.TemplateFile('test_template_template9.sh').template(t)
+
+        with open(os.path.join(os.environ['HOME'], 'test_template_template9.sh')) as f:
+            lines = f.readlines()
+            assert lines[0] == '#!/bin/sh\n'
+            assert lines[4] == 'hi'
+
     def test_is_templated_false(self, monkeypatch):
         monkeypatch.setattr(os, 'environ', os.environ | {'HOME': os.path.join(os.path.dirname(__file__), 'test_data', 'fake_home')})
         assert not template.TemplateFile('test_template_template0').is_templated()
@@ -63,6 +78,10 @@ class TestTemplateFile:
     def test_is_templated_missing(self, monkeypatch):
         monkeypatch.setattr(os, 'environ', os.environ | {'HOME': os.path.join(os.path.dirname(__file__), 'test_data', 'fake_home')})
         assert template.TemplateFile('test_template_template1').is_templated()
+
+    def test_is_templated_shebang(self, monkeypatch):
+        monkeypatch.setattr(os, 'environ', os.environ | {'HOME': os.path.join(os.path.dirname(__file__), 'test_data', 'fake_home')})
+        assert template.TemplateFile('test_template_template9.sh').is_templated()
 
 class TestTemplateDirectory:
     def test_create(self, monkeypatch):
