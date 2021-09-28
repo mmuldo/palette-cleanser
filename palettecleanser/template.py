@@ -26,6 +26,11 @@ default_templates = os.path.join(manual_templates_dir, 'defaults')
 overwrite_templates = os.path.join(manual_templates_dir, 'overwrites')
 
 
+### EXCEPTIONS ###
+class NoShebangError(Exception):
+    '''Thrown when no '#!/...' is found in a script file'''
+    pass
+
 ### UTILITY FUNCTIONS ###
 def open_readable(path: str) -> Optional[IO[AnyStr]]:
     '''open a file for reading, if it exists
@@ -55,6 +60,31 @@ def close_readable(readable: Optional[IO[AnyStr]]):
     '''
     if readable:
         readable.close()
+
+def get_shebang(path: str) -> str:
+    '''gets shebang from first line of shell files
+
+    Parameters
+    ----------
+    path : str
+        file path
+
+    Returns
+    -------
+    str:
+        shebang if it is present, empty string otherwise
+    '''
+    try:
+        with open(path, 'r') as f:
+            shebang = f.readline()
+    except FileNotFoundError:
+        return ''
+
+    if shebang[:2] == '#!':
+        return shebang
+    else:
+        raise NoShebangError('shebang not in first line of script file')
+
 
 def remove_j2(path: str):
     '''removes .j2 extension from filepath'''
@@ -115,7 +145,7 @@ class TemplateFile(Template):
             signature = {
                 '.hs': f'-- {templated_signature}',
                 '.rasi': f'/* {templated_signature} */',
-                '.vimrc': f'" {templated_signature}'
+                '.vimrc': f'" {templated_signature}',
             }[ext]
         except KeyError:
             signature = f'# {templated_signature}'
@@ -154,7 +184,7 @@ class TemplateFile(Template):
         '''
         try:
             with open(os.path.join(os.environ['HOME'], self.path), 'r') as f:
-                return templated_signature in f.readline()
+                return templated_signature in f.readline() + f.readline()
         except FileNotFoundError:
             # files that don't exist are considered templated
             return True
@@ -178,8 +208,17 @@ class TemplateFile(Template):
             shutil.move(destination, destination + '.backup')
 
         with open(destination, 'w') as out_file:
+            try:
+                # write the shebang if template is a script file (e.g. .sh)
+                out_file.write(get_shebang(os.path.join(config.templates_dir, self.path + '.j2')))
+            except NoShebangError:
+                pass
+
             out_file.write(self.generate_signature())
             out_file.write(output)
+
+        # change file permissions to match the template
+        os.chmod(destination, os.stat(os.path.join(config.templates_dir, self.path + '.j2')).st_mode)
 
 
 @dataclass
